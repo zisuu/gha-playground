@@ -36,74 +36,74 @@ jobs:
           name: backend-artifact
           path: backend/build/
 
-    lint:
-        needs: build
-        runs-on: ubuntu-latest
-        steps:
-          - name: Checkout
-            uses: actions/checkout@v2
+  lint:
+      needs: build
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v2
 
-          - name: Cache node modules
-            uses: actions/cache@v2
-            with:
-                path: node_modules
-                key: node-modules-cache
+        - name: Cache node modules
+          uses: actions/cache@v2
+          with:
+              path: node_modules
+              key: node-modules-cache
 
-          - name: Install dependencies
-            if: steps.cache.outputs.cache-hit != 'true'
-            run: cd backend && npm install
+        - name: Install dependencies
+          if: steps.cache.outputs.cache-hit != 'true'
+          run: cd backend && npm install
 
-          - name: Lint the code
-            run: cd backend && npm run lint
+        - name: Lint the code
+          run: cd backend && npm run lint
 
-    test:
-        needs: build
-        runs-on: ubuntu-latest
-        steps:
-          - name: Checkout
-            uses: actions/checkout@v2
+  test:
+      needs: build
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v2
 
-          - name: Cache node modules
-            uses: actions/cache@v2
-            with:
-                path: node_modules
-                key: node-modules-cache
+        - name: Cache node modules
+          uses: actions/cache@v2
+          with:
+              path: node_modules
+              key: node-modules-cache
 
-          - name: Install dependencies
-            if: steps.cache.outputs.cache-hit != 'true'
-            run: cd backend && npm install
+        - name: Install dependencies
+          if: steps.cache.outputs.cache-hit != 'true'
+          run: cd backend && npm install
 
-          - name: Test the code
-            run: cd backend && npm run test
+        - name: Test the code
+          run: cd backend && npm run test
 
-    deploy_to_eb:
-        if: github.event.inputs.ref == 'main'
-        needs: [build, lint, test]
-        runs-on: ubuntu-latest
+  deploy_to_eb:
+      if: github.event.inputs.ref == 'main'
+      needs: [build, lint, test]
+      runs-on: ubuntu-latest
 #        outputs:
 #          url: ${{ steps.deployment.outputs.page_url }}
-        steps:
-          - name: Get Artifact
-            uses: actions/download-artifact@v2
-            with:
-              name: backend-artifact
-              path: backend/build
+      steps:
+        - name: Get Artifact
+          uses: actions/download-artifact@v2
+          with:
+            name: backend-artifact
+            path: backend/build
 
-          - name: Prepare Procfile
-            run: |
-              echo "web: node server.js" > backend/build/Procfile
+        - name: Prepare Procfile
+          run: |
+            echo "web: node server.js" > backend/build/Procfile
 
-          - name: Prepare Zip file
-            run: cd backend/build && zip -r artifact.zip ./ -x "*.git*"
+        - name: Prepare Zip file
+          run: cd backend/build && zip -r artifact.zip ./ -x "*.git*"
 
-          - name: deploy to EB
-            id: deployment
-            uses: einaregilsson/beanstalk-deploy@v20
-            with:
-              aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-              aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-              application_name: AnyHasher
-              environment_name: AnyHasher-env
-              version_label: AnyHasher-${{ github.run_number }}"
-              region: eu-north-1
-              deployment_package: backend/build/artifact.zip
+        - name: deploy to EB
+          id: deployment
+          uses: einaregilsson/beanstalk-deploy@v20
+          with:
+            aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            application_name: AnyHasher
+            environment_name: AnyHasher-env
+            version_label: AnyHasher-${{ github.run_number }}"
+            region: eu-north-1
+            deployment_package: backend/build/artifact.zip
