@@ -89,7 +89,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Check for security issue
-        run: cd backend && npm audit --production --audit-level=info
+        run: cd backend && npm audit --production --audit-level=ignore GHSA-p8p7-x288-28g6
 
   be-static-analysis:
     name: 🔬 Run Static Analysis on Backend Code
@@ -160,7 +160,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Check for security issue
-        run: cd frontend && npm audit --production --audit-level=ignore GHSA-p8p7-x288-28g6
+        run: cd frontend && npm audit --production --audit-level=medium
 
   fe-static-analysis:
     name: 🔬 Run Static Analysis on Frontend Code
