@@ -1,4 +1,4 @@
-name: Announce 
+name: Announce
 run-name: "💬 CD: Announce a New Production Version Has Been Deployed"
 on:
   workflow_dispatch:
