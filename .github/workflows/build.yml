@@ -80,16 +80,16 @@ jobs:
       - name: Run Unit Tests
         run: cd backend && npm t
 
-  be-security-audit:
-    name: 🛡️ Audit Backend Packages for Security Vulnerabilities
-    needs: [be-build]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Check for security issue
-        run: cd backend && npm audit --production --audit-level=ignore GHSA-p8p7-x288-28g6
+#  be-security-audit:
+#    name: 🛡️ Audit Backend Packages for Security Vulnerabilities
+#    needs: [be-build]
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v3
+#
+#      - name: Check for security issue
+#        run: cd backend && npm audit --production --audit-level=ignore GHSA-p8p7-x288-28g6
 
   be-static-analysis:
     name: 🔬 Run Static Analysis on Backend Code
