@@ -1,0 +1,109 @@
+name: Deploy2
+run-name: "🚛 CD: Deploy Artifacts (${{ github.event.inputs.ref }})"
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cache node modules
+        uses: actions/cache@v2
+        with:
+          path: node_modules
+          key: node-modules-cache
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16.x
+
+      - name: Install dependencies
+        run: cd backend && npm install
+
+      - name: Build
+        run: cd backend && npm run build
+
+      - name: Store artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: backend-artifact
+          path: backend/build/
+
+    lint:
+        needs: build
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout
+            uses: actions/checkout@v2
+
+          - name: Cache node modules
+            uses: actions/cache@v2
+            with:
+                path: node_modules
+                key: node-modules-cache
+
+          - name: Install dependencies
+            if: steps.cache.outputs.cache-hit != 'true'
+            run: cd backend && npm install
+
+          - name: Lint the code
+            run: cd backend && npm run lint
+
+    test:
+        needs: build
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout
+            uses: actions/checkout@v2
+
+          - name: Cache node modules
+            uses: actions/cache@v2
+            with:
+                path: node_modules
+                key: node-modules-cache
+
+          - name: Install dependencies
+            if: steps.cache.outputs.cache-hit != 'true'
+            run: cd backend && npm install
+
+          - name: Test the code
+            run: cd backend && npm run test
+
+    deploy_to_eb:
+        if: github.event.inputs.ref == 'main'
+        needs: [build, lint, test]
+        runs-on: ubuntu-latest
+#        outputs:
+#          url: ${{ steps.deployment.outputs.page_url }}
+        steps:
+          - name: Get Artifact
+            uses: actions/download-artifact@v2
+            with:
+              name: backend-artifact
+              path: backend/build
+
+          - name: Prepare Procfile
+            run: |
+              echo "web: node server.js" > backend/build/Procfile
+
+          - name: Prepare Zip file
+            run: cd backend/build && zip -r artifact.zip ./ -x "*.git*"
+
+          - name: deploy to EB
+            id: deployment
+            uses: einaregilsson/beanstalk-deploy@v20
+            with:
+              aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+              aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+              application_name: AnyHasher
+              environment_name: AnyHasher-env
+              version_label: AnyHasher-${{ github.run_number }}"
+              region: eu-north-1
+              deployment_package: backend/build/artifact.zip

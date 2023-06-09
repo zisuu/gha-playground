@@ -208,5 +208,5 @@ jobs:
       - name: Dispatch
         uses: benc-uk/workflow-dispatch@v1
         with:
-          workflow: Deploy
+          workflow: Deploy2
           inputs: '{ "ref": "${{ github.sha }}" }'
